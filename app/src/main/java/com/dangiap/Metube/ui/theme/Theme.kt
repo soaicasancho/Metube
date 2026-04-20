@@ -1,4 +1,4 @@
-package com.lambdacoresw.app1.ui.theme
+package com.dangiap.Metube.ui.theme
 
 import android.app.Activity
 import android.os.Build
