@@ -1,16 +1,24 @@
 package com.dangiap.Metube
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.PictureInPictureParams
+import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import android.util.Rational
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.CheckBox
+import android.widget.LinearLayout
 import java.io.ByteArrayInputStream
 
 class MainActivity : Activity() {
@@ -33,7 +41,63 @@ class MainActivity : Activity() {
         setupWebView()
 
         webView.loadUrl("https://m.youtube.com")
+
+        // Gọi hàm kiểm tra quyền Pin chạy ngầm khi vừa mở app
+        checkBatteryOptimization()
     }
+
+    // --- LOGIC KIỂM TRA VÀ XIN QUYỀN PIN ---
+    private fun checkBatteryOptimization() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val sharedPreferences = getSharedPreferences("MetubePrefs", Context.MODE_PRIVATE)
+            // Kiểm tra xem người dùng đã tick "Không hiện lại" chưa
+            val dontShowAgain = sharedPreferences.getBoolean("dontShowBatteryPrompt", false)
+
+            if (dontShowAgain) return // Nếu đã tick, thoát hàm luôn, không hiện bảng
+
+            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+            // Nếu ứng dụng CHƯA có trong danh sách Không hạn chế
+            if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+                showBatteryPrompt(sharedPreferences)
+            }
+        }
+    }
+
+    private fun showBatteryPrompt(sharedPreferences: android.content.SharedPreferences) {
+        // Tự tạo Giao diện cho bảng thông báo (gồm 1 ô Checkbox)
+        val layout = LinearLayout(this)
+        layout.orientation = LinearLayout.VERTICAL
+        layout.setPadding(50, 40, 50, 10)
+
+        val checkBox = CheckBox(this)
+        checkBox.text = "Không hiển thị lại thông báo này"
+        layout.addView(checkBox)
+
+        // Hiển thị bảng thông báo
+        AlertDialog.Builder(this)
+            .setTitle("Cho phép chạy ngầm")
+            .setMessage("Để video không bị tự động ngắt khi tắt màn hình, hãy cho phép ứng dụng chạy trong chế độ 'Không hạn chế' (Unrestricted) pin.")
+            .setView(layout)
+            .setPositiveButton("Bật ngay") { _, _ ->
+                // Nếu tick vào ô, lưu lại trạng thái
+                if (checkBox.isChecked) {
+                    sharedPreferences.edit().putBoolean("dontShowBatteryPrompt", true).apply()
+                }
+                // Mở cửa sổ hệ thống để người dùng bấm "Cho phép"
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                intent.data = Uri.parse("package:$packageName")
+                startActivity(intent)
+            }
+            .setNegativeButton("Bỏ qua") { _, _ ->
+                // Nếu tick vào ô và bấm bỏ qua, cũng lưu lại trạng thái
+                if (checkBox.isChecked) {
+                    sharedPreferences.edit().putBoolean("dontShowBatteryPrompt", true).apply()
+                }
+            }
+            .setCancelable(false) // Bắt buộc phải chọn 1 trong 2 nút
+            .show()
+    }
+    // ---------------------------------------
 
     private fun setupWebView() {
         val settings = webView.settings
