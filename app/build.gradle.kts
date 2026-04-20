@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.lambdacoresw.app1"
+    namespace = "com.dangiap.Metube"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.lambdacoresw.app1"
+        applicationId = "com.dangiap.Metube"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
