@@ -1,4 +1,4 @@
-package com.lambdacoresw.app1
+package com.dangiap.Metube
 
 import android.app.PictureInPictureParams
 import android.content.res.Configuration
