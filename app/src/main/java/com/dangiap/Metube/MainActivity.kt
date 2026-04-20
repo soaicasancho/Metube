@@ -1,5 +1,6 @@
 package com.dangiap.Metube
 
+import android.app.Activity
 import android.app.PictureInPictureParams
 import android.content.res.Configuration
 import android.os.Build
@@ -10,14 +11,12 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.appcompat.app.AppCompatActivity
 import java.io.ByteArrayInputStream
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
 
     private lateinit var webView: WebView
 
-    // Danh sách đen chặn quảng cáo (AdBlock)
     private val adBlockList = listOf(
         "doubleclick.net",
         "googleadservices.com",
@@ -28,13 +27,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Lưu ý: R.layout.activity_main liên kết với file giao diện bạn vừa tạo ở bước trước
         setContentView(R.layout.activity_main)
 
         webView = findViewById(R.id.myWebView)
         setupWebView()
 
-        // Tải trang chủ YouTube Mobile
         webView.loadUrl("https://m.youtube.com")
     }
 
@@ -44,14 +41,12 @@ class MainActivity : AppCompatActivity() {
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
         settings.mediaPlaybackRequiresUserGesture = false 
-        // Giả lập điện thoại Android để lấy đúng giao diện mobile
         settings.userAgentString = "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36"
 
         webView.webChromeClient = WebChromeClient()
         
         webView.webViewClient = object : WebViewClient() {
             
-            // LOGIC CHẶN QUẢNG CÁO MẠNG
             override fun shouldInterceptRequest(
                 view: WebView?,
                 request: WebResourceRequest?
@@ -67,7 +62,6 @@ class MainActivity : AppCompatActivity() {
                 return super.shouldInterceptRequest(view, request)
             }
 
-            // TIÊM JAVASCRIPT SAU KHI TẢI TRANG XONG
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 injectJavaScript()
@@ -76,7 +70,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun injectJavaScript() {
-        // Mã JS giúp ẩn khung quảng cáo và cho phép phát dưới nền (tắt màn hình)
         val jsCode = """
             javascript:(function() {
                 var style = document.createElement('style');
@@ -95,7 +88,6 @@ class MainActivity : AppCompatActivity() {
         webView.evaluateJavascript(jsCode, null)
     }
 
-    // XỬ LÝ HÌNH TRONG HÌNH (PiP)
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -117,7 +109,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Nút Back trên điện thoại lùi lại trang web thay vì thoát app ngay
     override fun onBackPressed() {
         if (webView.canGoBack()) {
             webView.goBack()
